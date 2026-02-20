@@ -1,31 +1,36 @@
-const Crop = require("../models/crop");
-const Uses = require("../models/uses");
-const Price = require("../models/price");
+const Crop = require("../models/Crop");
+const Uses = require("../models/Uses");
+const Price = require("../models/Price");
 
-// Add Crop
+// Add only crop
 exports.addCrop = async (req, res) => {
-  try {
-    const { crop_id, name, use, price } = req.body;
-
-    await Crop.create({ crop_id, name });
-    await Uses.create({ crop_id, use });
-    await Price.create({ crop_id, price });
-
-    res.status(201).json({ message: "Crop added successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const { crop_id, name } = req.body;
+        await Crop.create({ crop_id, name });
+        res.status(201).json({ message: "Crop added successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
-// Get All Crops
+// Get all crops with their uses & prices
 exports.getAllCrops = async (req, res) => {
-  try {
-    const crops = await Crop.find();
-    const uses = await Uses.find();
-    const prices = await Price.find();
-
-    res.json({ crops, uses, prices });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const crops = await Crop.find();
+        const data = await Promise.all(
+            crops.map(async (crop) => {
+                const useData = await Uses.findOne({ crop_id: crop.crop_id });
+                const priceData = await Price.findOne({ crop_id: crop.crop_id });
+                return {
+                    crop_id: crop.crop_id,
+                    name: crop.name,
+                    use: useData ? useData.use : "",
+                    price: priceData ? priceData.price : ""
+                };
+            })
+        );
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };

@@ -5,4 +5,4 @@ const UsesSchema = new mongoose.Schema({
     use: { type: String, required: true }
 });
 
-module.exports = mongoose.model("Uses", UsesSchema);
+module.exports = mongoose.models.Uses || mongoose.model("Uses", UsesSchema);
